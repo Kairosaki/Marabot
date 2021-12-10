@@ -1,0 +1,26 @@
+{
+  "files": {
+    ".replit": [
+      {
+        "id": "666852eb-667a-41f9-aa3c-bf32ecee640e",
+        "line": 1,
+        "version": 63,
+        "index": 0
+      }
+    ],
+    "index.js": [
+      {
+        "id": "46886199-d27c-4576-b581-f06f66e86a83",
+        "line": 10,
+        "version": 12546,
+        "index": 370
+      },
+      {
+        "id": "d5638fd4-3dbe-4e03-a525-1e0965de2671",
+        "line": 87,
+        "version": 12546,
+        "index": 3449
+      }
+    ]
+  }
+}
