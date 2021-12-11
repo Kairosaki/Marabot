@@ -25,7 +25,6 @@ function addCommand(msg) {
   for (const [key, value] of Object.entries(json)) {
     arrExist.push("$"+key)
   }
-  console.log(arrExist.find( item => item === "$"+msgExist))
   if (msgExist === "add" || msgExist === "help" || msgExist === "del" || msgExist === "pascontent" || msgExist === "list" || arrExist.find( item => item === "$"+msgExist)) {
     msg.reply(`La commande **${msgExist}** existe déjà`)
   } 
@@ -42,7 +41,7 @@ function addCommand(msg) {
       msg.reply("max 2 args")
     } else {
       json[myArr[1]] = myArr[2].replace(",", " ");
-      fs.writeFile("./info.json", "\n"+JSON.stringify(json), err => {
+      fs.writeFile("./info.json", JSON.stringify(json), err => {
         if(err) console.log(err);
       });
       msg.channel.send(`La commande **${myArr[1]}** a bien été ajoutée`)
@@ -61,6 +60,28 @@ function listCommands(msg) {
   msg.channel.send(`**${newArr}**`);
 }
 
+// edit a command
+function editCommand(msg) {
+  let arrKey = []
+  let index;
+  let strEdit = "";
+  for (let [key, value] of Object.entries(json)) {
+    arrKey.push(key)
+  }
+  index = arrKey.findIndex( item => item === msg.content.split(" ")[1])
+  for (let i in msg.content.split(" ")) {
+    if (i >= 2) {
+      strEdit += " "+msg.content.split(" ")[i]
+    }
+  }
+  console.log(arrKey[index], strEdit)
+  json[arrKey[index]] = strEdit
+  fs.writeFile("./info.json", JSON.stringify(json), err => {
+    if(err) console.log(err);
+  });
+  msg.channel.send(`La commande **${arrKey[index]}** a été modifiée avec succès !`)
+}
+
 // delete a command
 function deleteCommand(msg) {
   myArr = msg.content.split(" ")
@@ -69,7 +90,7 @@ function deleteCommand(msg) {
   } 
   else {
     delete json[myArr[1]];
-    fs.writeFile("./info.json", "\n"+JSON.stringify(json), err => {
+    fs.writeFile("./info.json", JSON.stringify(json), err => {
       if(err) console.log(err);
     });
     msg.channel.send(`La commande **${myArr[1]}** a bien été supprimé`)
@@ -111,13 +132,16 @@ client.on("messageCreate", msg => {
     else if(msg.content.slice(0,4) === "$del") {
       deleteCommand(msg)
     }
+    else if(msg.content.slice(0,5) === "$edit") {
+      editCommand(msg)
+    }
     else if (msg.content === "$pascontent") {
       if (msg.author.id === admin) {
         clearChat(msg)
       }
     }
     else if (msg.content === "$help") {
-      msg.channel.send("```\nLE BOT N'EST ACTIF QUE SUR LE CHANNEL commands\n\nLa liste des commandes actuelles (évolue au fur & à mesure) :\n\n$list : Affiche toutes les commandes relatifs à la formation Devops, c'est aussi basé sur vos ajouts au fur et à mesure.\n\n$add : la syntaxe exacte c'est '$add macommande texte'\n- macommande = le nom que vous donnerez à la commande.\n- texte sera votre descriptif ou lien ou image ou autre.\nexemples :\n - $add share https://nc1.opencom.eu/index.php/s/oeoqFzgPT8aycLG?path=%2F12-Docker-Images\n - $add mdpshare DevOps21fai9Ee\n\n$del : la syntaxe '$del commande' : assez explicite ça supprime la commande présente dans la liste\n\n$help : Affiche ce message\n\n```")
+      msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte```")
     }
     else if (msg.content.slice(0,1) === "$") {
         msg.reply("La requête demandée n'existe pas, si vous désirez l'ajouter merci de taper $add")
