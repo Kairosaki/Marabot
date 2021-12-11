@@ -11,12 +11,24 @@ const mySecret = process.env['token'];
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
 // Temp array
-let myArr
+let myArr = []
 
 // add a new command 
 function addCommand(msg) {
-  let re = /"(\w+)\s(\w+)"/g
-  myArr = msg.content.replace(re, '$1,$2').split(" ")
+  //let re = /"(\w+)\W*(\w+)"/g
+  //myArr = msg.content.replace(re, '$1,$2').split(" ")
+  //console.log(msg.content.split(" ")[2])
+  let strArr = ""
+  for (let i in msg.content.split(" ")) {
+    if (i < 2) {
+      myArr.push(msg.content.split(" ")[i])
+    } else {
+      strArr += " "+msg.content.split(" ")[i]
+    }
+  }
+  myArr.push(strArr)
+  console.log(strArr)
+  console.log(myArr)
   if (myArr.length != 3) {
     msg.reply("max 2 args")
   } else {
@@ -25,6 +37,7 @@ function addCommand(msg) {
       if(err) console.log(err);
     });
     msg.reply(`Votre entrée **${myArr[1]}** a bien été ajoutée`)
+    myArr = []
   }
 }
 
