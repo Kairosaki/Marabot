@@ -1,0 +1,14 @@
+{
+    "user": [
+        {
+        "name": "test",
+        "commands": ["a", "b"],
+        "values": ["aa", "bb"]
+        },
+        {
+        "name": "toto",
+        "commands": ["c", "d"],
+        "values": ["cc", "dd"]
+        }
+   ]
+}

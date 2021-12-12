@@ -1,6 +1,7 @@
 // Require the necessary discord.js classes
 const { Client, Intents } = require('discord.js');
 const json = require('./info.json');
+const userJson = require('./usercommands.json');
 const fs = require('fs');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -74,7 +75,6 @@ function editCommand(msg) {
       strEdit += " "+msg.content.split(" ")[i]
     }
   }
-  console.log(arrKey[index], strEdit)
   json[arrKey[index]] = strEdit
   fs.writeFile("./info.json", JSON.stringify(json), err => {
     if(err) console.log(err);
@@ -95,6 +95,36 @@ function deleteCommand(msg) {
     });
     msg.channel.send(`La commande **${myArr[1]}** a bien été supprimé`)
   }
+}
+
+// command added by specific user
+function addCommandByUser(msg) {
+  let userExist = false
+  let firstCommand;
+  let firstValue;
+  let counter = 0;
+  for (let [key, value] of Object.entries(userJson)) {
+    if (msg.author.username === value[counter]["name"]) {
+      firstCommand = value[counter]["commands"]
+      firstValue = value[counter]["value"]
+      console.log(`A user ${value[counter]["name"]} was found. Adding command...`)
+      firstCommand += ","+msg.content.split(" ")[1]
+      firstValue += ","+msg.content.split(" ")[2]
+      console.log(firstCommand,firstValue)
+      userExist = true;
+    } else {
+      counter++;
+    }
+  }
+  if (!userExist) {
+    userJson["user"] = [{"name": msg.author.username, "commands": msg.content.split(" ")[1], "value": msg.content.split(" ")[2]}]
+  } else {
+    userJson["user"] = [{"name": msg.author.username, "commands": firstCommand, "value": firstValue}]
+  }
+
+  fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
+    if(err) console.log(err);
+  })
 }
 
 // clear tchat
@@ -126,6 +156,9 @@ client.on("messageCreate", msg => {
     else if(msg.content.slice(0,4) === "$add") {
       addCommand(msg)      
     } 
+    else if (msg.content.slice(0,6) === "$ajout") {
+      addCommandByUser(msg)
+    }
     else if (msg.content === "$list") {
       listCommands(msg)
     }
@@ -134,6 +167,9 @@ client.on("messageCreate", msg => {
     }
     else if(msg.content.slice(0,5) === "$edit") {
       editCommand(msg)
+    }
+    else if(msg.content.slice(0,7) === "$avatar") {
+      msg.channel.send(msg.author.displayAvatarURL({dynamic : true}))
     }
     else if (msg.content === "$pascontent") {
       if (msg.author.id === admin) {
