@@ -1,14 +1,1 @@
-{
-    "user": [
-        {
-        "name": "test",
-        "commands": ["a", "b"],
-        "values": ["aa", "bb"]
-        },
-        {
-        "name": "toto",
-        "commands": ["c", "d"],
-        "values": ["cc", "dd"]
-        }
-   ]
-}
+{"user":[{"name":"Kairo","commands":{"testanas":"coucou Anas","test":"hello world","test2":"hello world 2","test3":"hello world3"}},{"name":"Kevin","commands":{"testkevin":"coucou Kevin"}}]}
