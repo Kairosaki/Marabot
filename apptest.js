@@ -19,35 +19,21 @@ let myArr = []
 
 // add a new command 
 function addCommand(msg) {
-  let msgTest = msg;
-  let strArr = ""
-  let arrExist = []
-  let msgExist = msgTest.content.split(" ")[1]
+  let userCommand = msg.content.split(" ")[1]
+  let arrCommands = []
   for (const [key, value] of Object.entries(json)) {
-    arrExist.push("$"+key)
+    arrCommands.push(`$${key}`)
   }
-  if (msgExist === "add" || msgExist === "help" || msgExist === "del" || msgExist === "pascontent" || msgExist === "list" || arrExist.find( item => item === "$"+msgExist)) {
-    msg.reply(`La commande **${msgExist}** existe déjà`)
+  let userCommandValue = msg.content.replace(/(^\W\w+\s\w+\s)(.*)/, '$2')
+  if (userCommand === "add" || userCommand === "myadd" || userCommand === "help" || userCommand === "del" || userCommand === "mydel" || userCommand === "pascontent" || userCommand === "list" || userCommand === "mylist" || arrCommands.find( item => item === "$"+userCommand)) {
+    msg.reply(`La commande **${userCommand}** existe déjà`)
   } 
   else { 
-    for (let i in msg.content.split(" ")) {
-      if (i < 2) {
-        myArr.push(msg.content.split(" ")[i])
-      } else {
-        strArr += " "+msg.content.split(" ")[i]
-      }
-    }
-    myArr.push(strArr)
-    if (myArr.length != 3) {
-      msg.reply("max 2 args")
-    } else {
-      json[myArr[1]] = myArr[2].replace(",", " ");
-      fs.writeFile("./info.json", JSON.stringify(json), err => {
-        if(err) console.log(err);
-      });
-      msg.channel.send(`La commande **${myArr[1]}** a bien été ajoutée`)
-      myArr = []
-    }
+    json[userCommand] = userCommandValue;
+    fs.writeFile("./info.json", JSON.stringify(json), err => {
+      if(err) console.log(err);
+    });
+    msg.channel.send(`La commande **${userCommand}** a bien été ajoutée`)
   }
 }
 
