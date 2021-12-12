@@ -250,7 +250,7 @@ client.on("messageCreate", msg => {
       }
     }
     else if (msg.content === "$help") {
-      msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte```")
+      msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte\n$myadd : ajoute dans votre liste perso\n$mylist: affiche les commandes persos\n$mydel: supprime la commande perso```")
     }
     else if (msg.content.slice(0,1) === "$") {
         msg.reply("La requête demandée n'existe pas, si vous désirez l'ajouter merci de taper $add")
