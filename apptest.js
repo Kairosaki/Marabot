@@ -133,6 +133,7 @@ function addCommandByUser(msg) {
     } 
     else {
       userJson["user"][counter].commands[userCommand] = userCommandValue
+      msg.channel.send("La commande a bien été ajouté")
     }
     fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
       if(err) console.log(err);
@@ -174,12 +175,19 @@ function deleteUserCommand(msg) {
   for (const [key, value] of Object.entries(userJson)) {
     if (value[0].commands[commandAsked]) {
       delete value[0].commands[commandAsked]
+      commandExist = true;
+      
     }
   }
   fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
     if(err) console.log(err);
   })
-  msg.channel.send(`La commande ${commandAsked} a bien été supprimée`)
+  if (commandExist) {
+    msg.channel.send(`La commande ${commandAsked} a bien été supprimée`)
+  } else {
+    msg.channel.send("La commande n'existe pas !")
+  }
+  
 }
 
 // clear tchat
@@ -206,7 +214,6 @@ client.on("messageCreate", msg => {
     let userMessage = msg.content.slice(1);
     for (let [key, value] of Object.entries(userJson)){
       if (userJson["user"][userIndex].commands.hasOwnProperty(userMessage)) {
-        console.log("trouvé !!!!")
         userIndex = counter;
       } else {
         counter++
@@ -217,9 +224,6 @@ client.on("messageCreate", msg => {
       .then(() => console.log(`Replied to message ${msg.content}`))
       .catch(console.error);
     } 
-    else if (userJson["user"][userIndex].commands[userMessage]) {
-      msg.channel.send(userJson["user"][userIndex].commands[userMessage])
-    }
     else if(msg.content.slice(0,4) === "$add") {
       addCommand(msg)      
     } 
@@ -251,6 +255,9 @@ client.on("messageCreate", msg => {
     }
     else if (msg.content === "$help") {
       msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte\n$myadd : ajoute dans votre liste perso\n$mylist: affiche les commandes persos\n$mydel: supprime la commande perso```")
+    }
+    else if (userJson["user"][userIndex].commands[userMessage]) {
+      msg.channel.send(userJson["user"][userIndex].commands[userMessage])
     }
     else if (msg.content.slice(0,1) === "$") {
         msg.reply("La requête demandée n'existe pas, si vous désirez l'ajouter merci de taper $add")
