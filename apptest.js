@@ -87,21 +87,22 @@ function deleteCommand(msg) {
 function addCommandByUser(msg) {
   let counter = 0;
   let indexUser = 0;
+  let nbrUsers = 0
   let userExist = false;
   let commandExist = false;
   let userCommand = msg.content.split(" ")[1]
   let userCommandValue = msg.content.replace(/(^\W\w+\s\w+\s)(.*)/, '$2')
-  if (userCommand === "") {
+  if (userCommand === "" && userCommandValue === "") {
     console.log("command empty")
   } else {
-    for(const [key, value] of Object.entries(userJson)) {
+    for(let item of Object.values(userJson)[0]) {
       // if user exists
-      if(msg.author.username === value[counter].name) {
-        console.log("match !")
+      console.log(msg.author.username, item.name)
+      if(msg.author.username === item.name) {
         userExist = true;
         indexUser = counter;
         // if command exist
-        for(let [k, v] of Object.entries(value[counter].commands)) {
+        for(let [k, v] of Object.entries(item.commands)) {
           if(k === userCommand) {
             commandExist = true;
           }
@@ -110,9 +111,14 @@ function addCommandByUser(msg) {
         counter++
       }
     }
-    console.log(userCommand)
+
+    nbrUsers = Object.values(userJson)[0].length
     if(!userExist) {
-      userJson["user"] = [{"name": msg.author.username, "commands": { [userCommand] : userCommandValue }}]
+      if (nbrUsers === 0) {
+        userJson["user"] = [{"name": msg.author.username, "commands": { [userCommand] : userCommandValue }}]
+      } else {
+         userJson["user"][nbrUsers] = {"name": msg.author.username, "commands": { [userCommand] : userCommandValue }}
+      }
     } 
     else if (commandExist) {
       msg.channel.send("La commande existe déjà !")
@@ -121,10 +127,10 @@ function addCommandByUser(msg) {
       userJson["user"][counter].commands[userCommand] = userCommandValue
       msg.channel.send("La commande a bien été ajouté")
     }
-    fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
-      if(err) console.log(err);
-    })
   }
+  fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
+    if(err) console.log(err);
+  })
 }
 
 // list user command
@@ -134,14 +140,15 @@ function listUserCommands(msg) {
   let arrCommands = []
   let counter = 0
   let indexUser = 0
-  for (let [key, value] of Object.entries(userJson)) {
-    if (user === value[counter].name) {
+  for (let item of Object.values(userJson)[0]) {
+    if (user === item.name) {
       userExist = true
       indexUser = counter
     } else {
       counter++
     }
   }
+  console.log(userExist)
   if (userExist) {
     for(const [k, v] of Object.entries(userJson["user"][indexUser].commands)) {
       arrCommands.push(`$${k}`)
@@ -195,16 +202,17 @@ client.on("messageCreate", msg => {
   // only the channel specified
   if (msg.channel.id === myChannel1 || msg.channel.id === myChannel2) {
     if (msg.author.bot) return;
-    let userIndex = 0;
-    let counter = 0;
+
+    let customCommand = false;
     let userMessage = msg.content.slice(1);
-    for (let [key, value] of Object.entries(userJson)){
-      if (userJson["user"][userIndex].commands.hasOwnProperty(userMessage)) {
-        userIndex = counter;
-      } else {
-        counter++
+    for (let item of Object.values(userJson)[0]) {
+      console.log(item.commands.hasOwnProperty(userMessage))
+      if (item.name === msg.author.name && item.commands.hasOwnProperty(userMessage)) {
+        customCommand = true
+        msg.channel.send(item.commands[userMessage])
       }
     }
+    console.log("custom command is "+customCommand)
     if(json.hasOwnProperty(userMessage)) {
       msg.channel.send(json[userMessage])
       .then(() => console.log(`Replied to message ${msg.content}`))
@@ -242,8 +250,8 @@ client.on("messageCreate", msg => {
     else if (msg.content === "$help") {
       msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte\n$myadd : ajoute dans votre liste perso\n$mylist: affiche les commandes persos\n$mydel: supprime la commande perso```")
     }
-    else if (userJson["user"][userIndex].commands[userMessage]) {
-      msg.channel.send(userJson["user"][userIndex].commands[userMessage])
+    else if (customCommand) {
+        msg.channel.send(Object.values(userJson)[0].commands[userMessage])
     }
     else if (msg.content.slice(0,1) === "$") {
         msg.reply("La requête demandée n'existe pas, si vous désirez l'ajouter merci de taper $add")
