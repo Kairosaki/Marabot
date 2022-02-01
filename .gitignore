@@ -1,7 +1,6 @@
 .env
 node_modules
 config.json
-info.json
 test.json
 .gitignore
 appold.js
