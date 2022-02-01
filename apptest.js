@@ -12,42 +12,28 @@ const myChannel1 = process.env['channel1'];
 const myChannel2 = process.env['channel2'];
 
 // Create a new client instance
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
-
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS] });
+const talkedRecently = new Set();
 // Temp array
 let myArr = []
 
 // add a new command 
 function addCommand(msg) {
-  let msgTest = msg;
-  let strArr = ""
-  let arrExist = []
-  let msgExist = msgTest.content.split(" ")[1]
+  let userCommand = msg.content.split(" ")[1]
+  let arrCommands = []
   for (const [key, value] of Object.entries(json)) {
-    arrExist.push("$"+key)
+    arrCommands.push(`$${key}`)
   }
-  if (msgExist === "add" || msgExist === "help" || msgExist === "del" || msgExist === "pascontent" || msgExist === "list" || arrExist.find( item => item === "$"+msgExist)) {
-    msg.reply(`La commande **${msgExist}** existe déjà`)
+  let userCommandValue = msg.content.replace(/(^\W\w+\s\w+\s)(.*)/, '$2')
+  if (userCommand === "add" || userCommand === "myadd" || userCommand === "help" || userCommand === "del" || userCommand === "mydel" || userCommand === "pascontent" || userCommand === "list" || userCommand === "mylist" || arrCommands.find( item => item === "$"+userCommand)) {
+    msg.reply(`La commande **${userCommand}** existe déjà`)
   } 
   else { 
-    for (let i in msg.content.split(" ")) {
-      if (i < 2) {
-        myArr.push(msg.content.split(" ")[i])
-      } else {
-        strArr += " "+msg.content.split(" ")[i]
-      }
-    }
-    myArr.push(strArr)
-    if (myArr.length != 3) {
-      msg.reply("max 2 args")
-    } else {
-      json[myArr[1]] = myArr[2].replace(",", " ");
-      fs.writeFile("./info.json", JSON.stringify(json), err => {
-        if(err) console.log(err);
-      });
-      msg.channel.send(`La commande **${myArr[1]}** a bien été ajoutée`)
-      myArr = []
-    }
+    json[userCommand] = userCommandValue;
+    fs.writeFile("./info.json", JSON.stringify(json, null, 4), err => {
+      if(err) console.log(err);
+    });
+    msg.channel.send(`La commande **${userCommand}** a bien été ajoutée`)
   }
 }
 
@@ -76,7 +62,7 @@ function editCommand(msg) {
     }
   }
   json[arrKey[index]] = strEdit
-  fs.writeFile("./info.json", JSON.stringify(json), err => {
+  fs.writeFile("./info.json", JSON.stringify(json, null, 4), err => {
     if(err) console.log(err);
   });
   msg.channel.send(`La commande **${arrKey[index]}** a été modifiée avec succès !`)
@@ -90,7 +76,7 @@ function deleteCommand(msg) {
   } 
   else {
     delete json[myArr[1]];
-    fs.writeFile("./info.json", JSON.stringify(json), err => {
+    fs.writeFile("./info.json", JSON.stringify(json, null, 4), err => {
       if(err) console.log(err);
     });
     msg.channel.send(`La commande **${myArr[1]}** a bien été supprimé`)
@@ -99,73 +85,57 @@ function deleteCommand(msg) {
 
 // update addCommandByUser
 function addCommandByUser(msg) {
-  let counter = 0;
-  let indexUser = 0;
+  let user = msg.author.username
+  let nbrOfUsers = 0
   let userExist = false;
-  let commandExist = false;
   let userCommand = msg.content.split(" ")[1]
   let userCommandValue = msg.content.replace(/(^\W\w+\s\w+\s)(.*)/, '$2')
-  if (userCommand === "") {
-    console.log("command empty")
-  } else {
-    for(const [key, value] of Object.entries(userJson)) {
-      // if user exists
-      if(msg.author.username === value[counter].name) {
-        console.log("match !")
-        userExist = true;
-        indexUser = counter;
-        // if command exist
-        for(let [k, v] of Object.entries(value[counter].commands)) {
-          if(k === userCommand) {
-            commandExist = true;
-          }
-        }
+  for (let u of Object.values(userJson)[0]) {
+    if (user === u.name) {
+      userExist = true;
+      if (!u.commands.hasOwnProperty(userCommand)) {
+        u.commands[userCommand] = userCommandValue
       } else {
-        counter++
-      }
+        msg.reply("Ta commande perso existe déjà")
+      }      
     }
-    console.log(userCommand)
-    if(!userExist) {
-      userJson["user"] = [{"name": msg.author.username, "commands": { [userCommand] : userCommandValue }}]
-    } 
-    else if (commandExist) {
-      msg.channel.send("La commande existe déjà !")
-    } 
-    else {
-      userJson["user"][counter].commands[userCommand] = userCommandValue
-      msg.channel.send("La commande a bien été ajouté")
-    }
-    fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
-      if(err) console.log(err);
-    })
   }
+  nbrOfUsers = Object.values(userJson)[0].length
+  console.log(nbrOfUsers)
+  if (!userExist) {
+    if (nbrOfUsers === 0) {
+      userJson["user"] = {"name": user, "commands": { [userCommand] : userCommandValue }}
+    } else {
+      userJson["user"][nbrOfUsers] = {"name": user, "commands": { [userCommand] : userCommandValue }}
+    }
+  }
+  
+  fs.writeFile("./usercommands.json", JSON.stringify(userJson, null, 4), err => {
+    if(err) console.log(err);
+  })
+  msg.channel.send("Commande perso crée avec succès ! Tapez $mylist pour afficher la liste de vos commandes.")
 }
 
 // list user command
-function listUserCommands(msg) {
+function listUserCommands(msg, userTagged) {
   let user = msg.author.username
-  let userExist = false
-  let arrCommands = []
-  let counter = 0
-  let indexUser = 0
-  for (let [key, value] of Object.entries(userJson)) {
-    if (user === value[counter].name) {
-      userExist = true
-      indexUser = counter
-    } else {
-      counter++
+  let userCommands = []
+  let userOption = msg.content.split(" ")[1]
+  for (let u of Object.values(userJson)[0]) {
+    if (user === u.name) {
+      for(let [key, value] of Object.entries(u.commands)) {
+        userCommands.push("$"+key)
+      }
     }
   }
-  if (userExist) {
-    for(const [k, v] of Object.entries(userJson["user"][indexUser].commands)) {
-      arrCommands.push(`$${k}`)
-    }
-    let newArr = "```\n"+arrCommands.toString().replace(/,/g, " \n")+"```\n"
-    msg.channel.send(`**${newArr}**`)
+  let message = "```\n"+userCommands.toString().replace(/,/g, " \n")+"\n```"
+  if (userOption === "mp") {
+    msg.author.send(message)
+  } else if (userOption === "at"){
+    findDestination(message, userTagged, msg.channel.id, msg.author.id)
   } else {
-    msg.reply("Veuillez d'abord créer des commandes !")
+    msg.channel.send(message)
   }
-  
 }
 
 // delete a user command 
@@ -176,10 +146,9 @@ function deleteUserCommand(msg) {
     if (value[0].commands[commandAsked]) {
       delete value[0].commands[commandAsked]
       commandExist = true;
-      
     }
   }
-  fs.writeFile("./usercommands.json", JSON.stringify(userJson), err => {
+  fs.writeFile("./usercommands.json", JSON.stringify(userJson, null, 4), err => {
     if(err) console.log(err);
   })
   if (commandExist) {
@@ -200,6 +169,32 @@ function clearChat(msg) {
   })();
 }
 
+function findDestination(msg, usr, senderChannel, senderID) {
+  const guild = client.guilds.cache.get('897069149019320370');
+  // discord test
+  // const guild = client.guilds.cache.get('918042511245733939');
+  //let mpUserId = "202118392008802305"
+  //let userId = usr.replace(/(^\W\W)(\d)(\W)/, '$2')
+  let userId = usr.slice(3, -1)
+  if (talkedRecently.has(senderID)) {
+    client.channels.fetch(senderChannel).then( channel => {
+      channel.send("Attendez 10 sec !!")
+    })
+  } else {
+    client.users.fetch(userId).then( user => {
+      user.send(msg)
+    })
+    client.channels.fetch(senderChannel).then( channel => {
+      channel.send("Spam success !!")
+    })
+    talkedRecently.add(senderID);
+    setTimeout(() => {
+      talkedRecently.delete(senderID);
+    }, 10000);
+  }
+  
+}
+
 // Lancement du bot pour confirmer sa connexion
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`)
@@ -209,16 +204,23 @@ client.on("messageCreate", msg => {
   // only the channel specified
   if (msg.channel.id === myChannel1 || msg.channel.id === myChannel2) {
     if (msg.author.bot) return;
-    let userIndex = 0;
-    let counter = 0;
-    let userMessage = msg.content.slice(1);
-    for (let [key, value] of Object.entries(userJson)){
-      if (userJson["user"][userIndex].commands.hasOwnProperty(userMessage)) {
-        userIndex = counter;
+
+    let customCommand = false;
+    let userOption = msg.content.split(" ")[1]
+    let userTagged = msg.content.split(" ")[2]
+    let user = msg.author.username
+    let senderId = msg.author.id
+    let channelId = msg.channel.id
+    let counter = 0
+    let userMessage = msg.content.split(" ")[0].slice(1);
+    for (let item of Object.values(userJson)[0]) {
+      if (item.name === user && item.commands.hasOwnProperty(userMessage)) {
+        customCommand = true
       } else {
-        counter++
+        if (!customCommand) counter++
       }
     }
+    //console.log("custom command is "+customCommand)
     if(json.hasOwnProperty(userMessage)) {
       msg.channel.send(json[userMessage])
       .then(() => console.log(`Replied to message ${msg.content}`))
@@ -240,10 +242,11 @@ client.on("messageCreate", msg => {
       editCommand(msg)
     }
     else if(msg.content.slice(0,7) === "$mylist") {
-      listUserCommands(msg)
+      listUserCommands(msg, userTagged)
     }
     else if(msg.content.slice(0,6) === "$mydel") {
-      deleteUserCommand(msg)
+      //deleteUserCommand(msg)
+      msg.reply("la commande mydel est temporairement indisponible")
     }
     else if(msg.content.slice(0,7) === "$avatar") {
       msg.channel.send(msg.author.displayAvatarURL({dynamic : true}))
@@ -254,13 +257,20 @@ client.on("messageCreate", msg => {
       }
     }
     else if (msg.content === "$help") {
-      msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte\n$myadd : ajoute dans votre liste perso\n$mylist: affiche les commandes persos\n$mydel: supprime la commande perso```")
+      msg.channel.send("```\nLa liste des commandes CRUD :\n\n$list : Affiche toutes les commandes hormis ceux présents dans $help.\n$add : ajoute une commande. ex: $add sharemdp DevOps21fai9Ee\n$del : supprime la commande désignée.\n$edit : modifier une commande. ex: $edit test votretexte\n$myadd : ajoute dans votre liste perso\n$mylist: affiche les commandes persos, $mylist mp : pour la recevoir en privé\n$mydel: supprime la commande perso```")
     }
-    else if (userJson["user"][userIndex].commands[userMessage]) {
-      msg.channel.send(userJson["user"][userIndex].commands[userMessage])
+    else if (customCommand) {
+      if (userOption === "mp") {
+        msg.author.send(Object.values(userJson)[0][counter].commands[userMessage])
+      } else if (userOption === "at") {
+        findDestination(Object.values(userJson)[0][counter].commands[userMessage], userTagged, channelId, senderId)
+      } else {
+        msg.channel.send(Object.values(userJson)[0][counter].commands[userMessage])
+      }
+      
     }
     else if (msg.content.slice(0,1) === "$") {
-        msg.reply("La requête demandée n'existe pas, si vous désirez l'ajouter merci de taper $add")
+        msg.reply("La requête demandée n'existe pas, si vous désirez l'ajouter merci de taper $add ou $myadd")
         .then(() => console.log(`Replied to message ${msg.content}`))
         .catch(console.error);
     }  
