@@ -2,8 +2,5 @@
 node_modules
 config.json
 test.json
-info.json
 .gitignore
-appold.js
-commandsuserold.json
 .git

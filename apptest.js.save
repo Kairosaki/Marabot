@@ -10,7 +10,6 @@ const mySecret = process.env['token'];
 const admin = process.env['admin'];
 const myChannel1 = process.env['channel1'];
 const myChannel2 = process.env['channel2'];
-const myChannel3 = process.env['channel3'];
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS] });
@@ -20,12 +19,13 @@ let myArr = []
 
 // add a new command 
 function addCommand(msg) {
-  let userCommand = msg.content.split(" ")[1].replace(/\W*/, '')
+  let userCommand = msg.content.split(" ")[1]
   let arrCommands = []
   for (const [key, value] of Object.entries(json)) {
     arrCommands.push(`$${key}`)
   }
-  let userCommandValue = msg.content.replace(/^\W\w+\s\W?\w+\s/, '')
+  let userCommandValue = msg.content.replace(/(^\W\w+\s)(.*)/, '$2')
+  console.log(userCommandValue);
   if (userCommand === "add" || userCommand === "myadd" || userCommand === "help" || userCommand === "del" || userCommand === "mydel" || userCommand === "pascontent" || userCommand === "list" || userCommand === "mylist" || arrCommands.find(item => item === "$" + userCommand)) {
     msg.reply(`La commande **${userCommand}** existe déjà`)
   }
@@ -89,8 +89,8 @@ function addCommandByUser(msg) {
   let user = msg.author.username
   let nbrOfUsers = 0
   let userExist = false;
-  let userCommand = msg.content.split(" ")[1].replace(/\W*/, '')
-  let userCommandValue = msg.content.replace(/^\W\w+\s\W?\w+\s/, '')
+  let userCommand = msg.content.split(" ")[1]
+  let userCommandValue = msg.content.replace(/(^\W\w+\s)(.*)/, '$2')
   for (let u of Object.values(userJson)[0]) {
     if (user === u.name) {
       userExist = true;
@@ -167,7 +167,7 @@ function clearChat(msg) {
   (async () => {
     let deleted;
     do {
-      deleted = await msg.channel.bulkDelete(10);
+      deleted = await msg.channel.bulkDelete(100);
     } while (deleted.size != 0);
   })();
 }
@@ -208,7 +208,6 @@ client.on("messageCreate", msg => {
   if (msg.channel.id === myChannel1 || msg.channel.id === myChannel2) {
     if (msg.author.bot) return;
 
-    let imageText;
     let customCommand = false;
     let userOption = msg.content.split(" ")[1]
     let userTagged = msg.content.split(" ")[2]
@@ -226,16 +225,9 @@ client.on("messageCreate", msg => {
     }
     //console.log("custom command is "+customCommand)
     if (json.hasOwnProperty(userMessage)) {
-      imageText = json[userMessage]
-      if(checkImageURL(imageText) && isValidUrl(imageText) && !imageText.includes('github') && !imageText.includes('gitlab') && !imageText.includes('discord.com/channels') && !imageText.includes('docs.google.com') && !imageText.includes('drive.google.com')) {
-	msg.channel.send({ files: [imageText] })
-	 .then(() => console.log(`Replied to message ${msg.content}`))
-	 .catch(console.error);
-      } else {
-        msg.channel.send(json[userMessage])
-         .then(() => console.log(`Replied to message ${msg.content}`))
-         .catch(console.error);
-      }
+      msg.channel.send(json[userMessage])
+        .then(() => console.log(`Replied to message ${msg.content}`))
+        .catch(console.error);
     }
     else if (msg.content.slice(0, 4) === "$add") {
       addCommand(msg)
@@ -287,16 +279,6 @@ client.on("messageCreate", msg => {
     }
   }
 });
-
-
-function isValidUrl(_string) {
-  const matchPattern = /^(?:\w+:)?\/\/([^\s\.]+\.\S{2}|localhost[\:?\d]*)\S*$/;
-  return matchPattern.test(_string);
-}
-
-function checkImageURL(url) {
-    return(url.match(/\.(jpeg|jpg|gif|png)$/) != null);
-}
 
 
 client.login(mySecret);
