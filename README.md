@@ -1,5 +1,5 @@
 # Marabot
-A simple discord bot :robot: can handle commands. 
+A simple discord bot :robot: that handle commands. 
 
 There are two types of commands, the ones that is shared with everyone and the ones that is personal.
 
